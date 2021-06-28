@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Movie Recommendation System</title>
+</head>
+
+<style>
+	body
+	{
+		margin: 0pxpy;
+		background: coral;
+	}
+
+	input[type=submit]
+	{
+		background-color: DodgerBlue;
+		color: #fff;
+		cursor: pointer;
+	}
+
+	.head
+	{
+		font-size: 30px;
+		text-align: center;
+		height: 150px;
+		font-family: "Comic Sans MS";
+	}
+
+	.main
+	{
+		display: flex;
+		flex: 1;
+	}
+
+	.form
+	{
+		margin: 0 auto;
+		display: flex;
+		flex-direction: row;
+	}
+
+	.autocomplete
+	{
+		position: relative;
+		display: inline-block;
+	}
+
+	.name-btn
+	{
+		width: 400px;
+		height: 40px;
+		border-radius: 25px;
+		text-align: center;
+		font-size: 25px;
+		font-family: 'Andale Mono', monospace;
+	}
+
+	.name-btn:focus
+	{
+		outline: none;
+	}
+
+	.rating-btn
+	{
+		width: 200px;
+		height: 40px;
+		border-radius: 25px;
+		text-align: center;
+		font-size: 25px;
+		font-family: 'Andale Mono', monospace;
+	}
+
+	.rating-btn:focus
+	{
+		outline: none;
+	}
+
+	.submit-btn
+	{
+		width: 150px;
+		height: 43px;
+		border-radius: 25px;
+		font-size: 25px;
+		font-family: 'Andale Mono', monospace;
+	}
+
+	.reset-btn
+	{
+		width: 150px;
+		height: 43px;
+		border-radius: 25px;
+		font-size: 25px;
+		font-family: 'Andale Mono', monospace;
+	}
+
+	.reset
+	{
+		margin: 0 auto;
+	}
+	
+	.print-list
+	{
+		font-size: 20px;
+		font-family: 'Andale Mono', monospace;
+		margin-top: 50px;
+		text-align: center;
+	}
+
+	.autocomplete-items
+	{
+		position: absolute;
+		border: 1px solid #d4d4d4;
+		border-bottom: none;
+		border-top: none;
+		z-index: 99;
+		top: 100%;
+		left: 0;
+		right: 0;
+	}
+
+	.suggestions > div
+	{
+		padding: 15px;
+		font-size: 200px;
+		color: #fff;
+		cursor: pointer;
+	}
+
+	.autocomplete-items div
+	{
+		padding: 10px;
+		cursor: pointer;
+		background-color: #fff;
+		font-size: 20px;
+		font-family: 'Andale Mono', monospace;
+	}
+
+	.autocomplete-active
+	{
+  		background-color: orange !important;
+	}
+
+	.autocomplete-items div:hover
+	{
+		background-color: orange;
+	}
+
+</style>
+
+<body>
+	<div style="height: 300px; width: 100%; position: fixed; background-color: coral;">
+		<div class = "head" style="text-align: center">
+			<h1>Movie Recommendation System</h1>
+		</div>
+
+		<div class="main">
+		  <form autocomplete="off" action="{% url 'sub' %}" method="POST" class = "form">{% csrf_token %}
+			<div class="autocomplete">
+			  <input id = "myInput" type="text" class="name-btn" placeholder="Search Movie" name = "name" required/>
+			</div>
+			<div style="width: 15px"></div>
+			<div class="rating">
+			  <input type="number" name="rating" class = "rating-btn" placeholder="Rating(0-5)"  min = "0" max = "5" required>
+			</div>
+			<div style="width: 15px"></div>
+			<div class="submit">
+				<input class = "submit-btn" type="submit">
+			</div>
+		  </form>
+		</div><br>
+
+		<form autocomplete="off" action="{% url 'reset' %}" class = "form">{% csrf_token %}
+			<div class="reset">
+				<button class = "reset-btn" type="submit">Reset</button>
+			</div>
+		</form>
+	</div>
+
+	<br>
+	<div style="margin-top: 300px; background-color: coral; height: 200px;">
+		<div class="print-list">
+			{% for item in value1 %}
+				<h3>{{item}}</h3>
+			{% endfor %}
+		</div>
+	</div>
+
+<script>
+function autocomplete(inp, arr)
+{
+  var currentFocus;
+  inp.addEventListener("input", function(e) {
+      var a, b, i, val = this.value;
+      closeAllLists();
+      if (!val) { return false;}
+      currentFocus = -1;
+      a = document.createElement("DIV");
+      a.setAttribute("id", this.id + "autocomplete-list");
+      a.setAttribute("class", "autocomplete-items");
+      this.parentNode.appendChild(a);
+      for (i = 0; i < arr.length; i++) {
+        if (arr[i].substr(0, val.length).toUpperCase() === val.toUpperCase()) {
+          b = document.createElement("DIV");
+          b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+          b.innerHTML += arr[i].substr(val.length);
+          b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+          b.addEventListener("click", function(e) {
+              inp.value = this.getElementsByTagName("input")[0].value;
+              closeAllLists();
+          });
+          a.appendChild(b);
+        }
+      }
+  });
+  inp.addEventListener("keydown", function(e) {
+      var x = document.getElementById(this.id + "autocomplete-list");
+      if (x) x = x.getElementsByTagName("div");
+      if (e.keyCode === 40) {
+        currentFocus++;
+        addActive(x);
+      } else if (e.keyCode === 38) {
+        currentFocus--;
+        addActive(x);
+      } else if (e.keyCode === 13) {
+        e.preventDefault();
+        if (currentFocus > -1) {
+          if (x) x[currentFocus].click();
+        }
+      }
+  });
+  function addActive(x) {
+    if (!x) return false;
+    removeActive(x);
+    if (currentFocus >= x.length) currentFocus = 0;
+    if (currentFocus < 0) currentFocus = (x.length - 1);
+    x[currentFocus].classList.add("autocomplete-active");
+  }
+  function removeActive(x) {
+    for (var i = 0; i < x.length; i++) {
+      x[i].classList.remove("autocomplete-active");
+    }
+  }
+  function closeAllLists(elmnt) {
+    var x = document.getElementsByClassName("autocomplete-items");
+    for (var i = 0; i < x.length; i++) {
+      if (elmnt !== x[i] && elmnt !== inp) {
+        x[i].parentNode.removeChild(x[i]);
+      }
+    }
+  }
+  document.addEventListener("click", function (e) {
+      closeAllLists(e.target);
+  });
+}
+    var data = {{data|safe}};
+    var temp = data['list'];
+
+autocomplete(document.getElementById("myInput"), temp);
+
+</script>
+
+</body>
+
+</html>
